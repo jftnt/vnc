@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VNC Viewer</title>
+
+<style>
+  body { margin: 0; background: #111827; color: white; font: 14px system-ui; }
+  form { display: flex; gap: 10px; align-items: center; padding: 12px; }
+  input { flex: 1; min-width: 0; }
+  input, button { padding: 10px; border: 0; border-radius: 6px; }
+  button { background: #60a5fa; cursor: pointer; }
+  #screen { height: calc(100dvh - 65px); }
+</style>
+
+<form>
+  <strong>VNC</strong>
+  <input id="url" type="url" placeholder="ws://mac-ip:6080" required>
+  <button>Connect</button>
+</form>
+<div id="screen"></div>
+
+<script type="module">
+  import RFB from 'https://esm.sh/@novnc/novnc@1.6.0/lib/rfb.js?standalone';
+
+  let rfb;
+  document.querySelector('form').onsubmit = event => {
+    event.preventDefault();
+    rfb?.disconnect();
+
+    rfb = new RFB(document.querySelector('#screen'),
+                  document.querySelector('#url').value);
+    rfb.scaleViewport = true;
+
+    rfb.addEventListener('credentialsrequired', event => {
+      const credentials = {};
+      for (const type of event.detail.types) {
+        credentials[type] = prompt(`VNC ${type}:`);
+        if (credentials[type] === null) {
+          rfb.disconnect();
+          return;
+        }
+      }
+      rfb.sendCredentials(credentials);
+    });
+  };
+</script>
+</html>
